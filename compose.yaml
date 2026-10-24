@@ -1,0 +1,47 @@
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: retail_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: retail_analytics
+      POSTGRES_USER: retail_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U retail_user -d retail_analytics"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  spark:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: retail_spark
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: retail_analytics
+      DB_USER: retail_user
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POWERBI_PASSWORD: ${POWERBI_PASSWORD:-}
+      SPARK_LOCAL_IP: 127.0.0.1
+    ports:
+      - "127.0.0.1:4040:4040"
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    command: ["bash", "-lc", "sleep infinity"]
+
+volumes:
+  postgres_data:

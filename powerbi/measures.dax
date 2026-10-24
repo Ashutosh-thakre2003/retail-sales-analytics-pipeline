@@ -1,0 +1,93 @@
+// Power BI measures for the Retail Sales dashboard.
+// Create a table named _Measures (Home > Enter data > Load) and add each
+// measure below with Modeling > New measure. Table names assume the
+// imported queries were renamed to fact_sales, dim_date, and so on.
+
+// ---------- Core ----------
+Total Sales = SUM ( fact_sales[sales] )
+
+Total Profit = SUM ( fact_sales[profit] )
+
+Profit Margin = DIVIDE ( [Total Profit], [Total Sales] )
+
+Orders = DISTINCTCOUNT ( fact_sales[order_id] )
+
+Customers = DISTINCTCOUNT ( fact_sales[customer_key] )
+
+Units Sold = SUM ( fact_sales[quantity] )
+
+Avg Order Value = DIVIDE ( [Total Sales], [Orders] )
+
+Sales Lines = COUNTROWS ( fact_sales )
+
+// ---------- Discounts and losses ----------
+Avg Discount = AVERAGE ( fact_sales[discount] )
+
+Discount Amount = SUM ( fact_sales[discount_amount] )
+
+Loss Lines % =
+DIVIDE (
+    CALCULATE ( COUNTROWS ( fact_sales ), fact_sales[is_loss] = TRUE () ),
+    COUNTROWS ( fact_sales )
+)
+
+Loss Amount =
+CALCULATE ( [Total Profit], fact_sales[is_loss] = TRUE () )
+
+// ---------- Shipping ----------
+Avg Ship Days = AVERAGE ( fact_sales[ship_days] )
+
+// Counts orders by ship date instead of order date (inactive relationship).
+Orders Shipped =
+CALCULATE (
+    [Orders],
+    USERELATIONSHIP ( fact_sales[ship_date_key], dim_date[date_key] )
+)
+
+// ---------- Time intelligence (requires dim_date marked as date table) ----------
+Sales PY =
+CALCULATE ( [Total Sales], SAMEPERIODLASTYEAR ( dim_date[full_date] ) )
+
+Profit PY =
+CALCULATE ( [Total Profit], SAMEPERIODLASTYEAR ( dim_date[full_date] ) )
+
+Sales YoY % =
+IF (
+    ISBLANK ( [Total Sales] ) || ISBLANK ( [Sales PY] ),
+    BLANK (),
+    DIVIDE ( [Total Sales] - [Sales PY], [Sales PY] )
+)
+
+Profit YoY % =
+IF (
+    ISBLANK ( [Total Profit] ) || ISBLANK ( [Profit PY] ),
+    BLANK (),
+    DIVIDE ( [Total Profit] - [Profit PY], ABS ( [Profit PY] ) )
+)
+
+Sales YTD = TOTALYTD ( [Total Sales], dim_date[full_date] )
+
+Profit YTD = TOTALYTD ( [Total Profit], dim_date[full_date] )
+
+Sales Rolling 3M =
+CALCULATE (
+    [Total Sales],
+    DATESINPERIOD ( dim_date[full_date], MAX ( dim_date[full_date] ), -3, MONTH )
+)
+
+// ---------- Ranking and labels ----------
+Customer Sales Rank =
+IF (
+    ISINSCOPE ( dim_customer[customer_name] ),
+    RANKX ( ALLSELECTED ( dim_customer[customer_name] ), [Total Sales], , DESC )
+)
+
+// Red for losses, blue for profit (red/blue stays readable for colour-blind
+// viewers, unlike red/green). Use with Format > Conditional formatting >
+// Field value on bar colors or font colors.
+Profit Color = IF ( [Total Profit] < 0, "#D03B3B", "#256ABF" )
+
+// Shows the latest order date in the data, for a "data as of" card.
+Data As Of =
+"Data as of "
+    & FORMAT ( MAXX ( ALL ( fact_sales ), RELATED ( dim_date[full_date] ) ), "d mmm yyyy" )
