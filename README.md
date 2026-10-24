@@ -92,12 +92,25 @@ Individual steps can also be run on their own, for example
 The dashboard has four pages: Executive Overview, Products and Discounts,
 Customers and Regions, and Shipping and Trends.
 
-<!-- Add screenshots after building the dashboard:
-![Executive Overview](docs/images/01_executive_overview.png)
-![Products and Discounts](docs/images/02_products_discounts.png)
-![Customers and Regions](docs/images/03_customers_regions.png)
-![Shipping and Trends](docs/images/04_shipping_trends.png)
--->
+The images below are page mockups rendered from the warehouse data with
+matplotlib. They show the layout, visuals and fields for each Power BI page
+(see the [build guide](docs/power_bi_guide.md)).
+
+### Executive Overview
+
+![Executive Overview mockup](docs/images/mockups/page1_executive_overview.png)
+
+### Products and Discounts
+
+![Products and Discounts mockup](docs/images/mockups/page2_products_discounts.png)
+
+### Customers and Regions
+
+![Customers and Regions mockup](docs/images/mockups/page3_customers_regions.png)
+
+### Shipping and Trends
+
+![Shipping and Trends mockup](docs/images/mockups/page4_shipping_trends.png)
 
 ## Documentation
 
